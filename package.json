@@ -19,7 +19,11 @@
   },
   "homepage": "https://github.com/jp21biel/WebDevProject#readme",
   "dependencies": {
+    "chart.js": "^4.5.1",
     "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "fs": "^0.0.1-security",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^6.0.1"
   }
 }

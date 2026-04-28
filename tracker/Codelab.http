@@ -1,5 +1,0 @@
-@client_id =
-@secret =
-@redirect_uri = https://www.google.com
-@accessToken={{user.response.body.access_token}}
-@refreshToken={{user.response.body.refresh_token}}
