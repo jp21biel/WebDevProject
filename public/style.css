@@ -1,3 +1,12 @@
+body {
+    background-color:#ffdcc3;
+}
+
+.header-top-row {
+    background-color:#cc5500 !important;
+    color: white;
+}
+
 .remove {
     width: 5px;
     height: 5px;
