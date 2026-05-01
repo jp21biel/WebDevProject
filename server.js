@@ -1,6 +1,8 @@
 "use strict";
 const PORT = process.env.PORT || 8050;
 
+
+
 const { DatabaseSync } = require("node:sqlite");
 const watch = new DatabaseSync("./data/watchdata.db");
 watch.exec(`CREATE TABLE IF NOT EXISTS calories (StartTime TEXT PRIMARY KEY, EndTime TEXT, kcal NUMBER)`);
