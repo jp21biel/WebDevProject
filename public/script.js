@@ -3,14 +3,13 @@ const { Chart } = require("chart.js");
 
 let searchParams = [];
 function rmv(e){
-    let parent = e.parent;
-    for(let i = 0; i < searchParams.length; i++){
-        if(searchParams[i] == e.id){
-            searchParams.delete(i);
-            break;
-        }
+   for(let i= 0; i< searchParams.length; i++){
+    if(searchParams[i] == e.target.textContent){
+        searchParams.splice(i,1);
+        break;
     }
-    document.removeChild(parent);
+   }
+    e.target.closest('p').remove();
 }
 const remove = document.createElement("button");
 remove.className = "remove";
@@ -63,7 +62,7 @@ document.getElementById('search').addEventListener('click', async() => {
     for(let ing of ingredients){
         query += " " + ing.textContent;
     }
-    const url = `https://api.edamam.com/api/recipes/v2?type=public&q=${query}&app_id=${APP_ID}&app_key=${APP_KEY}`;
+    const url = `https://api.edamam.com/api/recipes/v2?type=public&q=${query}&app_id=ef792d931d74ed83c333d2dabf55c331&app_key=8b60d4fc`;
     const response = await fetch(url, {
         method: 'GET',
         headers: {
