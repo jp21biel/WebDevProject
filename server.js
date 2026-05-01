@@ -1,4 +1,6 @@
 "use strict";
+const PORT = process.env.PORT || 8050;
+
 const { DatabaseSync } = require("node:sqlite");
 const watch = new DatabaseSync("./data/watchdata.db");
 watch.exec(`CREATE TABLE IF NOT EXISTS calories (StartTime TEXT PRIMARY KEY, EndTime TEXT, kcal NUMBER)`);
@@ -33,7 +35,7 @@ function init(){
       console.log(tokens.access_token);
       console.log(tokens.refresh_token);
       await syncData();
-      
+      //res.redirect('/');
       server.close();
       //process.exit(0);
     }
@@ -78,26 +80,30 @@ function updatePoints(endTime, cal){
   }
   let total = cal;
   for(let i = 0; i < set.length; i++){
-    total += set[i];
+    total += set[i].kcal;
   }
   return total;
 }
 
+const path = require('path');
 const express = require('express');
-const cors = require('cors');
 const app = express();
-app.use(cors());
-app.use(express.static('public'));
+const cors = require('cors');
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use(cors({
+  origin: 'https://potential-enigma-jjp4gp55j647cpv47-5500.app.github.dev',
+  credentials: true
+}));
 
 app.get('/watch/x', (req, res) => {
   syncData();
-  const stmt = watch.prepare("SELECT time FROM calories");
-  res.json(stmt.all());
+  const stmt = watch.prepare("SELECT EndTime FROM calories");
+  res.json(stmt.all().map((_, index) => index));
 });
 app.get('/watch/y', (req, res) => {
-  const stmt = watch.prepare("SELECT calories FROM calories");
-  res.json(stmt.all());
+  const stmt = watch.prepare("SELECT kcal FROM calories");
+  res.json(stmt.all().map(row => row.kcal));
 });
 app.post('/food', async (req, res) => {
   const { name, time, recipe } = req.body;
@@ -105,8 +111,11 @@ app.post('/food', async (req, res) => {
   stmt.run(time, name, recipe.calories);
   syncData();
 });
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
-const PORT = process.env.PORT || 8050;
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   init();

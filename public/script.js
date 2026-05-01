@@ -1,23 +1,7 @@
 const APP_ID = "8b60d4fc";
 const APP_KEY = "ef792d931d74ed83c333d2dabf55c331";
 
-
 let searchParams = [];
-function rmv(e) {
-    let parent = e.parent;
-    for (let i = 0; i < searchParams.length; i++) {
-        if (searchParams[i] == e.id) {
-            searchParams.delete(i);
-            break;
-        }
-    }
-   }
-    e.target.closest('p').remove();
-
-const remove = document.createElement("button");
-remove.className = "remove";
-remove.textContent = "-";
-remove.addEventListener('click', rmv);
 
 function statusCheck(response) {
     if (response.ok) return response;
@@ -28,18 +12,24 @@ function statusCheck(response) {
         throw new Error('HTTP ' + response.status);
     });
 }
-function updateGraph() {
-    let x = fetch('/watch/x').then(statusCheck).then(res => res.json());
-    let y = fetch('/watch/y').then(statusCheck).then(res => res.json());
-    let calChart = new Chart("calgraph", {
+async function updateGraph() {
+    const x = fetch('https://potential-enigma-jjp4gp55j647cpv47-8050.app.github.dev/watch/x').then(statusCheck).then(res => res.json());
+    const y = fetch('https://potential-enigma-jjp4gp55j647cpv47-8050.app.github.dev/watch/y').then(statusCheck).then(res => res.json());
+    const xData = await x;
+    const yData = await y;
+    console.log(yData);
+    let calChart;
+    if (calChart) {
+            calChart.destroy();
+        }
+    calChart = new Chart("calgraph", {
         type: "line",
         data: {
+            labels: xData,
             datasets: [
                 {
-                    data: x
-                },
-                {
-                    data: y
+                    label: "Net Calories Burned",
+                    data: yData
                 }
             ]
         },
@@ -101,7 +91,7 @@ document.getElementById('search').addEventListener('click', async () => {
                         time: currentTime,
                         recipeData: JSON.stringify(recipe)
                     };
-                    const serverResponse = await fetch('/food', {
+                    const serverResponse = await fetch('https://potential-enigma-jjp4gp55j647cpv47-8050.app.github.dev/food', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
