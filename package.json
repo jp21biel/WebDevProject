@@ -21,8 +21,13 @@
   "dependencies": {
     "chart.js": "^4.5.1",
     "cors": "^2.8.6",
+    "edamam-api": "^1.1.3",
     "express": "^5.2.1",
     "fs": "^0.0.1-security",
+    "google-auth-library": "^10.6.2",
+    "googleapis": "^171.4.0",
+    "open": "^11.0.0",
+    "passport-google-oauth2": "^0.2.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^6.0.1"
   }
