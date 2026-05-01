@@ -2,17 +2,19 @@
 const { DatabaseSync } = require("node:sqlite");
 const watch = new DatabaseSync("./data/watchdata.db");
 watch.exec(`CREATE TABLE IF NOT EXISTS calories (StartTime TEXT PRIMARY KEY, EndTime TEXT, kcal NUMBER)`);
+const food = new DatabaseSync("./data/meals.db");
+food.exec("CREATE TABLE IF NOT EXISTS meals (Time TEXT PRIMARY KEY, Name TEXT, kcal NUMBER)");
 
 const targetDate = new Date().toISOString().split('T')[0];
-const startTime = `${targetDate}T00:00:00Z`;
-const endTime = `${targetDate}T23:59:59Z`;
+
+
+const SCOPES = ['https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly', 'https://www.googleapis.com/auth/googlehealth.nutrition.readonly'];
 
 const { OAuth2Client } = require('google-auth-library');
 let client;
 const http = require('http');
 const url = require('url');
 function init(){
-  
   client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
   const authUrl = client.generateAuthUrl({
     access_type: 'offline',
@@ -33,7 +35,7 @@ function init(){
       await syncData();
       
       server.close();
-      process.exit(0);
+      //process.exit(0);
     }
   }).listen(3000, () => {
     console.log('Visit this URL:\n' + authUrl);
@@ -55,39 +57,30 @@ async function syncData() {
       })
     });
     const data = await response.json();
-    
-    console.dir(data);
     const points = data.rollupDataPoints || [];
+    console.dir(JSON.stringify(points));
     if (!points) {
       console.log('No data found. Ensure your wearable has synced to the cloud');
     }
-    points.forEach(p => {
-      console.log(`- ${p.interval.startTime}: ${p.totalCalories.toFixed(1)} kcal`);
-    });
-    const upsert = watch.prepare(`
-      INSERT INTO calories (time, value, origin, sync_at)
-      VALUES (@time, @value, @origin, @sync_at)
-      ON CONFLICT(time) DO UPDATE SET
-        value = excluded.value,
-        sync_at = excluded.sync_at
-    `);
-    const syncTransaction = watch.transaction((records) => {
-      for (const record of records) upsert.run(record);
-    });
-    const dbRecords = points.map(p => ({
-      time: p.interval.startTime,
-      value: p.totalCalories, // v4 uses the specific field name
-      origin: p.originId || 'unknown',
-      sync_at: new Date().toISOString()
-    }));
-    if (dbRecords.length > 0) {
-      syncTransaction(dbRecords);
-      console.log(`Successfully synced ${dbRecords.length} records for ${targetDate}`);
+    const upsert = watch.prepare(`INSERT INTO calories (StartTime, EndTime, kcal) VALUES (?, ?, ?) ON CONFLICT(StartTime) DO UPDATE SET kcal = ?`);
+    for(let point of points){
+      upsert.run(point.startTime, point.endTime, point.totalCalories.kcalSum, updatePoints(point.endTime, point.totalCalories.kcalSum));
     }
-    return dbRecords;
   } catch (error) {
     console.error(`SQLite Sync Error for ${targetDate}:`, error.message);
   }
+}
+function updatePoints(endTime, cal){
+  const stmt = food.prepare("SELECT kcal FROM meals WHERE Time > ?");
+  let set = stmt.all(endTime);
+  if(set.length === 0){
+    return cal;
+  }
+  let total = cal;
+  for(let i = 0; i < set.length; i++){
+    total += set[i];
+  }
+  return total;
 }
 
 const express = require('express');
@@ -99,15 +92,18 @@ app.use(express.json());
 
 app.get('/watch/x', (req, res) => {
   syncData();
-  const stmt = watch.prepare("SELECT time FROM Calories");
+  const stmt = watch.prepare("SELECT time FROM calories");
   res.json(stmt.all());
 });
 app.get('/watch/y', (req, res) => {
-  const stmt = watch.prepare("SELECT calories FROM Calories");
+  const stmt = watch.prepare("SELECT calories FROM calories");
   res.json(stmt.all());
 });
-app.post('/food', (req, res) => {
-  const stmt = watch.prepare();
+app.post('/food', async (req, res) => {
+  const { name, time, recipe } = req.body;
+  const stmt = food.prepare("INSERT INTO meals (Time, Name, kcal) VALUES (?, ?, ?)");
+  stmt.run(time, name, recipe.calories);
+  syncData();
 });
 
 const PORT = process.env.PORT || 8050;

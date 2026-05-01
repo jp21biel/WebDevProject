@@ -96,10 +96,11 @@ document.getElementById('search').addEventListener('click', async () => {
                 try {
                     const currentTime = new Date().toISOString;
                     const payload = {
+                        recipeName: recipe.label,
                         time: currentTime,
                         recipeData: JSON.stringify(recipe)
                     };
-                    const serverResponse = await fetch('/api/use-recipe', {
+                    const serverResponse = await fetch('/food', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
