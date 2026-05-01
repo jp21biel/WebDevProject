@@ -12,3 +12,8 @@ body {
     height: 5px;
     background-color: white;
 }
+
+.flexrow {
+    display: flex;
+    flex-direction: row;
+}
