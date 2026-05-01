@@ -61,7 +61,7 @@ document.getElementById('search').addEventListener('click', async() => {
     let query = "";
     let ingredients = document.getElementById('chosen').children;
     for(let ing of ingredients){
-        query.concat(" ", ing.textContent);
+        query += " " + ing.textContent;
     }
     const url = `https://api.edamam.com/api/recipes/v2?type=public&q=${query}&app_id=${APP_ID}&app_key=${APP_KEY}`;
     const response = await fetch(url, {
@@ -72,4 +72,34 @@ document.getElementById('search').addEventListener('click', async() => {
         }
     });
     const data = await response.json();
+    const results = document.getElementById('results');
+    results.innerHTML = '';
+
+    if (data.hits && data.hits.length > 0) {
+        data.hits.forEach(hit => {
+            const recipe = hit.recipe;
+            const col = document.createElement('div');
+            col.className = 'col-md-4';
+            col.innerHTML = `
+            <div class="card h-100">
+            <img src="${recipe.image || ''}" class="card-img-top" alt="${recipe.label}">
+            <div class="card-body">
+            <h5 class="card-title">${recipe.label}</h5>
+            <p class="text-muted small">${Math.round(recipe.calories)} kcal</p>
+            <a href="${recipe.url}" target="_blank" class="btn btn-success btn-sm">View Recipe</a>
+            </div>
+            </div>`;
+            results.appendChild(col);
+        });
+        
+    } else {
+        results.innerHTML = '<p class="text-muted">No recipes found.</p>';
+    }
+
+
 });
+
+function clearAll(){
+    document.getElementById('chosen').innerHTML = '';
+    searchParams = [];
+}
